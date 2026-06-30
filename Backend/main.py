@@ -4,6 +4,8 @@ from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 
 from controller.download_video import download_video
+from controller.getThumbnail import getThumbnail
+from controller.getResolutions import getResolutions
 
 
 app = FastAPI()
@@ -16,6 +18,30 @@ class YoutubeVideo(BaseModel):
 def is_valid_youtube_url(url):
     pattern = r"^(https?://)?(www\.)?youtube\.com/watch\?v=[\w-]+(&\S*)?$"
     return re.match(pattern, url) is not None
+
+@app.post("/metadata/")
+def view_resolutions(video: YoutubeVideo):
+    try:
+        reso = getResolutions(video.url)
+        print("reso", reso)
+        return {
+            "resolution": reso
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+        
+
+@app.post("/thumbnail/")
+def download_by_thumbnail(video: YoutubeVideo):
+    try:
+        thumbnail = getThumbnail(video.url)
+
+        return {
+            "thumbnail": thumbnail
+        }
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 @app.post("/download/")
 def download_by_resolution(video: YoutubeVideo):
