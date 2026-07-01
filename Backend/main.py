@@ -1,5 +1,6 @@
 import re
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, APIRouter
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 
@@ -8,8 +9,23 @@ from controller.getThumbnail import getThumbnail
 from controller.getResolutions import getResolutions
 
 
-app = FastAPI()
+app = FastAPI(version="1.0.0", title="Clockwork API", description="API for Clockwork application")
 
+origins = [
+    "http://localhost:5173"
+]
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=[
+        "http://localhost:5173",
+    ],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+router = APIRouter(prefix="/api/v1")
 class YoutubeVideo(BaseModel):
     url: str;
     resolution: str;
@@ -19,7 +35,7 @@ def is_valid_youtube_url(url):
     pattern = r"^(https?://)?(www\.)?youtube\.com/watch\?v=[\w-]+(&\S*)?$"
     return re.match(pattern, url) is not None
 
-@app.post("/streams/")
+@router.post("/streams/")
 def view_resolutions(video: YoutubeVideo):
     try:
         reso = getResolutions(video.url)
@@ -31,7 +47,7 @@ def view_resolutions(video: YoutubeVideo):
         raise HTTPException(status_code=500, detail=str(e))
         
 
-@app.post("/thumbnail/")
+@router.post("/thumbnail/")
 def download_by_thumbnail(video: YoutubeVideo):
     try:
         thumbnail = getThumbnail(video.url)
@@ -43,7 +59,7 @@ def download_by_thumbnail(video: YoutubeVideo):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-@app.post("/download/")
+@router.post("/download/")
 def download_by_resolution(video: YoutubeVideo):
     url = video.url
     resolution = video.resolution
@@ -64,3 +80,5 @@ def download_by_resolution(video: YoutubeVideo):
 )
     else: 
         raise HTTPException(status_code=500, detail=error_message)
+    
+app.include_router(router)

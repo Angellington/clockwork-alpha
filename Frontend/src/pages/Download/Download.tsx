@@ -3,26 +3,36 @@ import { Box, Button, Typography, useTheme } from '@mui/material';
 
 import Resource from '../../components/Resource';
 import TextField from '../../components/TextField';
+import { useYoutube } from '../../hooks/useYoutube';
 
 interface DownloadForm {
     url: string;
+    resolution: string;
 }
 
 export default function Download() {
     const { control, handleSubmit } = useForm<DownloadForm>({
         defaultValues: {
             url: '',
+            resolution: " ",
         },
     });
+    const url = control.getValues("url") || '';
+
+    const { videoInfo, fetchData, error, loading } = useYoutube(url);
+
+
 
     const onSubmit = (data: DownloadForm) => {
-        console.log(data);
-    };
+        fetchData.mutate(data.url);
+    }
+
     const theme = useTheme();
+
 
     return (
         <Resource>
-            <Typography component={'h1'} variant='h4' sx={{ color: '#fff'}}>
+            <Typography component={'h1'} variant='h4' sx={{ color: '#fff' }}>
                 Set the youtube URL to DOWNLOAD VIDEO
             </Typography>
 
@@ -40,6 +50,8 @@ export default function Download() {
                     }}
                 />
 
+
+
                 <Button
                     variant="contained"
                     color="info"
@@ -47,6 +59,8 @@ export default function Download() {
                 >
                     Consultar
                 </Button>
+
+                {/* <SelectItem name='resolutions' label='Resolutions' control={control} items={resolutions} /> */}
 
             </Box>
         </Resource>
