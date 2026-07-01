@@ -10,7 +10,6 @@ def download_video(url, resolution):
     try:
         yt = YouTube(url)
         safe_title = re.sub(r'[<>:"/\\|?*]', '', yt.title)        
-        print("yt", yt)
         video_id = url.split("v=")[1].split("&")[0]
         out_dir = Path.home() / "Downloads" / video_id
         os.makedirs(out_dir, exist_ok=True)
