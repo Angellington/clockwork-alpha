@@ -10,14 +10,17 @@ interface DownloadForm {
     resolution: string;
 }
 
+
+
+
 export default function Download() {
-    const { control, handleSubmit } = useForm<DownloadForm>({
+    const { control, handleSubmit, getValues } = useForm<DownloadForm>({
         defaultValues: {
             url: '',
             resolution: " ",
         },
     });
-    const url = control.getValues("url") || '';
+    const url = getValues("url") || '';
 
     const { videoInfo, fetchData, error, loading } = useYoutube(url);
 
@@ -29,40 +32,20 @@ export default function Download() {
 
     const theme = useTheme();
 
+    console.log("videoInfo", videoInfo);
 
     return (
         <Resource>
-            <Typography component={'h1'} variant='h4' sx={{ color: '#fff' }}>
-                Set the youtube URL to DOWNLOAD VIDEO
-            </Typography>
-
             <Box sx={{
                 display: 'flex',
-                gap: 2
+                backgroundColor: '#333',
+                padding: '1.2rem 8rem'
             }}>
-
-                <TextField
-                    name="url"
-                    control={control}
-                    label="URL"
-                    sx={{
-                        width: 500
-                    }}
-                />
-
-
-
-                <Button
-                    variant="contained"
-                    color="info"
-                    onClick={handleSubmit(onSubmit)}
-                >
-                    Consultar
-                </Button>
-
-                {/* <SelectItem name='resolutions' label='Resolutions' control={control} items={resolutions} /> */}
-
+                <Typography color='#fff' >Clockwork Alpha Youtube Finder</Typography>
             </Box>
+
+                    
+
         </Resource>
     );
 }

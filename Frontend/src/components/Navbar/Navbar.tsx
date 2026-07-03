@@ -30,12 +30,15 @@ const MenuBox = styled(Box, {
     overflow: 'hidden',
     transition: 'width 0.3s ease',
     paddingTop: '4em',
-    background: '#fff',
-    boxShadow: '0 0 10px rgba(0,0,0,.1)',
+    background: '#f0f0f040',
+    boxShadow: '8px 0px 22px 5px rgba(0,0,0,0.5)',
     height: '100vh',
-
+    backdropFilter: 'blur(5px)',
+    WebkitBackdropFilter: 'blur(5px)', // necessário para compatibilidade com Safari
     flexShrink: 0,
 }));
+
+
 
 const MenuButton = styled(ListItemButton)(({ theme }) => ({
     flexDirection: 'column',
@@ -61,7 +64,7 @@ export default function SideMenu() {
     return (
         <>
             <MenuBox open={open}>
-                <Box pt={2}>
+                <Box pt={2} sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2 }}>
                     {items.map((item) => (
                         <ListItem key={item.label} disablePadding>
                             <MenuButton onClick={() => navigate(item.path)}>

@@ -8,7 +8,7 @@ export function useYoutube() {
         resolutions: string[];
     } | null>(null);
 
-    const [loading, setLoading] = useState<Boolean>(false);
+    const [loading, setLoading] = useState<boolean>(false);
     const [error, setError] = useState<string | null>(null);
 
     const fetchData = useMutation({
