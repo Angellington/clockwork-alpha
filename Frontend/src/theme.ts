@@ -2,17 +2,17 @@ import { createTheme, type ThemeOptions } from "@mui/material/styles";
 
 export const themeOptions: ThemeOptions = {
   palette: {
-    mode: "light", 
+    mode: "light",
     primary: {
-      main: "#2A2829", 
-      light: "#4A4548", 
-      dark: "#1A1819", 
+      main: "#2A2829",
+      light: "#4A4548",
+      dark: "#1A1819",
       contrastText: "#F5F3F4",
     },
     secondary: {
-      main: "#4A4548", 
-      light: "#6B676A", 
-      dark: "#3F3B3D", 
+      main: "#4A4548",
+      light: "#6B676A",
+      dark: "#3F3B3D",
       contrastText: "#F5F3F4",
     },
     background: {
@@ -20,14 +20,14 @@ export const themeOptions: ThemeOptions = {
       paper: "#F5F3F4",
     },
     text: {
-      primary: "#2A2829", 
-      secondary: "#4A4548", 
+      primary: "#2A2829",
+      secondary: "#4A4548",
       disabled: "#C9C5C8",
     },
     divider: "#D8D4D6",
     action: {
       active: "#4A4548",
-      hover: "rgba(42, 40, 41, 0.06)", 
+      hover: "rgba(42, 40, 41, 0.06)",
       selected: "rgba(42, 40, 41, 0.12)",
       disabled: "#C9C5C8",
       disabledBackground: "#D8D4D6",
@@ -68,19 +68,19 @@ export const themeOptions: ThemeOptions = {
       color: "#4A4548",
     },
     button: {
-      textTransform: "none", 
+      textTransform: "none",
       fontWeight: 600,
       letterSpacing: "0.02em",
     },
     body1: {
-      color: "#3F3B3D", 
+      color: "#3F3B3D",
     },
     body2: {
-      color: "#4A4548", 
+      color: "#4A4548",
     },
   },
   shape: {
-    borderRadius: 4, 
+    borderRadius: 4,
   },
   components: {
     MuiAppBar: {
@@ -105,7 +105,7 @@ export const themeOptions: ThemeOptions = {
           backgroundColor: "#2A2829",
           color: "#F5F3F4",
           "&:hover": {
-            backgroundColor: "#3F3B3D", 
+            backgroundColor: "#3F3B3D",
             boxShadow: "0 2px 8px rgba(42, 40, 41, 0.15)",
           },
         },
@@ -249,6 +249,19 @@ export const themeOptions: ThemeOptions = {
           color: "#4A4548",
           "&.Mui-focused": {
             color: "#2A2829",
+          },
+        },
+      },
+    },
+    MuiContainer: {
+      styleOverrides: {
+        root: {
+          "&.header": {
+            backgroundColor: "#333333",
+          },
+
+          "&.subHeader": {
+            backgroundColor: "rgba(255, 255, 255, 0.4)",
           },
         },
       },

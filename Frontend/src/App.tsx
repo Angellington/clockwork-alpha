@@ -19,6 +19,7 @@ function App() {
             <Routes>
               <Route path='/' element={<Delicate />} />
               <Route path='/download' element={<Download />} />
+              {/* <Route path='/memoing' element={<Memoing />} /> */}
             </Routes>
           </AppLayout>
         </ThemeProvider>

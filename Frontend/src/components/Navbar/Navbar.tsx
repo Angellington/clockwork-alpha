@@ -1,4 +1,4 @@
-import { AudioFile, Download, GraphicEq, MicOff, SortSharp } from '@mui/icons-material';
+import { AudioFile, Close, Download, GraphicEq, MicOff, SortSharp } from '@mui/icons-material';
 import {
     Box,
     IconButton,
@@ -6,8 +6,10 @@ import {
     ListItemButton,
     Typography,
     styled,
+    useMediaQuery,
+    useTheme,
 } from '@mui/material';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router';
 
 const items = [
@@ -19,33 +21,42 @@ const items = [
 
 interface MenuBoxProps {
     open: boolean;
+    mobile: boolean;
 }
 
 const MENU_WIDTH = 100;
 
 const MenuBox = styled(Box, {
-    shouldForwardProp: (prop) => prop !== 'open',
-})<MenuBoxProps>(({ open }) => ({
+    shouldForwardProp: (prop) => prop !== 'open' && prop !== 'mobile',
+})<MenuBoxProps>(({ open, mobile, theme }) => ({
     width: open ? MENU_WIDTH : 0,
+    position: 'relative',
     overflow: 'hidden',
     transition: 'width 0.3s ease',
     paddingTop: '4em',
     background: '#f0f0f040',
     boxShadow: '8px 0px 22px 5px rgba(0,0,0,0.5)',
-    height: '100vh',
+    height: '100dvh',
     backdropFilter: 'blur(5px)',
-    WebkitBackdropFilter: 'blur(5px)', // necessário para compatibilidade com Safari
+    WebkitBackdropFilter: 'blur(5px)',
     flexShrink: 0,
+
+    ...(mobile && {
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        zIndex: theme.zIndex.drawer,
+        width: open ? 'min(78vw, 280px)' : 0,
+        background: '#f0f0f0d9',
+    }),
 }));
-
-
 
 const MenuButton = styled(ListItemButton)(({ theme }) => ({
     flexDirection: 'column',
     gap: theme.spacing(1),
     width: 80,
     height: 80,
-    borderRadius: theme.shape.borderRadius * 2,
+    borderRadius: 8,
 
     '& .MuiSvgIcon-root': {
         fontSize: 28,
@@ -55,19 +66,60 @@ const MenuButton = styled(ListItemButton)(({ theme }) => ({
         textAlign: 'center',
         fontSize: '0.75rem',
     },
+
+    [theme.breakpoints.down('sm')]: {
+        width: '100%',
+        height: 56,
+        flexDirection: 'row',
+        justifyContent: 'flex-start',
+        paddingInline: theme.spacing(2),
+        borderRadius: theme.shape.borderRadius,
+
+        '& .MuiSvgIcon-root': {
+            fontSize: 24,
+        },
+
+        '& .MuiTypography-root': {
+            fontSize: '0.9rem',
+            textAlign: 'left',
+        },
+    },
 }));
 
 export default function SideMenu() {
     const [open, setOpen] = useState(true);
+    const theme = useTheme();
+    const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
     const navigate = useNavigate();
+
+    useEffect(() => {
+        setOpen(!isMobile);
+    }, [isMobile]);
+
+    const handleNavigate = (path: string) => {
+        navigate(path);
+
+        if (isMobile) {
+            setOpen(false);
+        }
+    };
 
     return (
         <>
-            <MenuBox open={open}>
-                <Box pt={2} sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2 }}>
+            <MenuBox open={open} mobile={isMobile}>
+                <Box
+                    sx={{
+                        display: 'flex',
+                        flexDirection: 'column',
+                        alignItems: 'center',
+                        gap: 2,
+                        pt: 2,
+                        px: isMobile ? 2 : 0,
+                    }}
+                >
                     {items.map((item) => (
                         <ListItem key={item.label} disablePadding>
-                            <MenuButton onClick={() => navigate(item.path)}>
+                            <MenuButton onClick={() => handleNavigate(item.path)}>
                                 {item.icon}
                                 <Typography>{item.label}</Typography>
                             </MenuButton>
@@ -76,22 +128,31 @@ export default function SideMenu() {
                 </Box>
             </MenuBox>
 
-            <Box flex={1} position="relative">
-                <IconButton
-                    onClick={() => setOpen((prev) => !prev)}
+            {isMobile && open && (
+                <Box
+                    onClick={() => setOpen(false)}
                     sx={{
                         position: 'fixed',
-                        top: 16,
-                        left: 30,
-                        zIndex: 1300,
-                        '&:hover': {
-                            bgcolor: 'background.paper',
-                        },
+                        inset: 0,
+                        zIndex: theme.zIndex.drawer - 1,
+                        backgroundColor: 'rgba(0, 0, 0, 0.25)',
                     }}
-                >
-                    <SortSharp />
-                </IconButton>
-            </Box>
+                />
+            )}
+
+            <IconButton
+                aria-label={open ? 'Fechar menu' : 'Abrir menu'}
+                onClick={() => setOpen((prev) => !prev)}
+                sx={{
+                    position: 'fixed',
+                    top: 16,
+                    left: isMobile ? 16 : 30,
+                    zIndex: theme.zIndex.drawer + 1,
+                    transition: 'left 0.3s ease',
+                }}
+            >
+                {isMobile && open ? <Close /> : <SortSharp />}
+            </IconButton>
         </>
     );
 }
