@@ -1,0 +1,7 @@
+from fastapi import APIRouter
+
+from app.api.v1.routes.youtube import router as youtube_router
+
+api_router = APIRouter()
+api_router.include_router(youtube_router, prefix="/youtube")
+api_router.include_router(youtube_router)
