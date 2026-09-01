@@ -1,0 +1,4 @@
+fastapi==0.138.1
+pytubefix==10.10.1
+uvicorn==0.49.0
+yt-dlp==2026.8.19

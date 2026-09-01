@@ -1,53 +1,26 @@
-from pytubefix import YouTube
+from controller.providers.pytubefix_provider import get_resolutions_with_pytubefix
+from controller.providers.ytdlp_provider import get_resolutions_with_ytdlp
+
+
+def _is_successful_response(response: dict) -> bool:
+    return bool(response.get("success"))
 
 
 def getResolutions(url: str) -> dict:
-    yt = YouTube(url)
+    errors = []
 
-    video_streams = list(
-        yt.streams.filter(progressive=True, file_extension="mp4")
-    )
+    for provider_name, provider in (
+        ("pytubefix", get_resolutions_with_pytubefix),
+        ("yt-dlp", get_resolutions_with_ytdlp),
+    ):
+        try:
+            response = provider(url)
 
-    audio_streams = list(
-        yt.streams.filter(only_audio=True).order_by("abr").desc()
-    )
+            if _is_successful_response(response):
+                return response
 
-    if not video_streams:
-        return {
-            "success": False,
-            "message": "No progressive streams found"
-        }
+            errors.append(f"{provider_name}: {response.get('message', 'No streams found')}")
+        except Exception as error:
+            errors.append(f"{provider_name}: {error}")
 
-    if not audio_streams:
-        return {
-            "success": False,
-            "message": "No audio streams found"
-        }
-
-    resolutions = [
-        {
-            "itag": stream.itag,
-            "resolution": stream.resolution,
-            "fps": stream.fps,
-            "mimeType": stream.mime_type,
-            "subtype": stream.subtype,
-        }
-        for stream in video_streams
-    ]
-
-    audios = [
-        {
-            "itag": stream.itag,
-            "abr": stream.abr,
-            "mimeType": stream.mime_type,
-            "subtype": stream.subtype,
-            "audioCodec": stream.audio_codec,
-        }
-        for stream in audio_streams
-    ]
-
-    return {
-        "success": True,
-        "video": resolutions,
-        "audio": audios,
-    }
+    raise RuntimeError("; ".join(errors))
