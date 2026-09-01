@@ -57,7 +57,7 @@ export const downloadStyles = {
             left: 0,
             width: {
                 xs: '42%',
-                md: '25%',
+                md: '79%',
             },
             height: '100%',
             backgroundColor: 'rgba(0,0,0,0.58)',
