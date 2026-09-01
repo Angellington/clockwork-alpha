@@ -1,27 +1,21 @@
 import { Box } from '@mui/material';
 import React from 'react';
 import SideMenu from './Navbar/Navbar';
-import { styled } from '@mui/material/styles';
+import { AppLayoutRoot, appLayoutStyles } from '../styles/components.styles';
 
 interface AppLayoutProps {
     children: React.ReactNode;
 }
 
-const Layout = styled(Box)(() => ({
-    width: '100%',
-    height: '100vh',
-    display: 'flex',
-}));
-
 const AppLayout = ({ children }: AppLayoutProps) => {
     return (
-        <Layout>
+        <AppLayoutRoot>
             <SideMenu />
-            <Box sx={{ flex: 1, minWidth: 0 }}>
+            <Box sx={appLayoutStyles.content}>
                 {children}
             </Box>
-        </Layout>
+        </AppLayoutRoot>
     );
 };
 
-export default AppLayout
+export default AppLayout;

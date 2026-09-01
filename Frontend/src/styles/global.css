@@ -1,11 +1,21 @@
-body {
-    margin: 0;
-    padding: 0;
+* {
     box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+    width: 100%;
+    min-height: 100%;
+    margin: 0;
+}
+
+body {
+    padding: 0;
+    overflow: hidden;
     background-image: url('/images/ClockworkAlpha.png');
     background-size: cover;
     background-position: center;
     background-repeat: no-repeat;
     background-attachment: fixed;
-
 }
