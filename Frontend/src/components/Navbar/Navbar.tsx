@@ -1,4 +1,4 @@
-import { AudioFile, Close, Download, GraphicEq, MicOff, SortSharp } from '@mui/icons-material';
+import { AudioFile, Close, Download, GraphicEq, MicOff, SortSharp, VideoLibrary } from '@mui/icons-material';
 import {
     Box,
     IconButton,
@@ -13,6 +13,7 @@ import { MenuBox, MenuButton, navbarStyles } from '../../styles/components.style
 
 const items = [
     { label: 'Download Youtube', icon: <Download />, path: '/download' },
+    { label: 'Quarantine', icon: <VideoLibrary />, path: '/quarantine' },
     { label: 'Extract WAV', icon: <AudioFile />, path: '/extract' },
     { label: 'Vocal Remover', icon: <MicOff />, path: '/vocal-remover' },
     { label: 'Levelator Audio', icon: <GraphicEq />, path: '/levelator' },

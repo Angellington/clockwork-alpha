@@ -1,0 +1,331 @@
+import type { Theme } from '@mui/material/styles';
+
+export const quarantineStyles = {
+    route: {
+        minHeight: '100dvh',
+        height: '100%',
+        overflow: 'auto',
+        background:
+            'linear-gradient(180deg, #05070A 0%, #091016 44%, #0D1414 100%)',
+        color: '#E8EDF0',
+        px: {
+            xs: 2,
+            md: 5,
+        },
+        py: {
+            xs: 8,
+            md: 5,
+        },
+    },
+    shell: {
+        width: '100%',
+        maxWidth: 1180,
+        mx: 'auto',
+    },
+    header: {
+        display: 'flex',
+        alignItems: {
+            xs: 'flex-start',
+            md: 'center',
+        },
+        justifyContent: 'space-between',
+        flexDirection: {
+            xs: 'column',
+            md: 'row',
+        },
+        gap: 2,
+        mb: 3,
+    },
+    title: {
+        fontSize: {
+            xs: '2rem',
+            md: '2.75rem',
+        },
+        fontWeight: 800,
+        color: '#F8FAFB',
+    },
+    subtitle: {
+        maxWidth: 640,
+        color: 'rgba(232,237,240,0.68)',
+        lineHeight: 1.65,
+    },
+    actions: {
+        display: 'flex',
+        gap: 1.25,
+        flexWrap: 'wrap',
+    },
+    primaryButton: {
+        borderRadius: 2,
+        minHeight: 42,
+        px: 2,
+        backgroundColor: '#7AD7C4',
+        color: '#06100F',
+        fontWeight: 700,
+        '&:hover': {
+            backgroundColor: '#A0E6D8',
+        },
+    },
+
+    dangerButton: {
+        borderRadius: 2,
+        minHeight: 42,
+        px: 2,
+        backgroundColor: '#D76D6D',
+        color: '#170707',
+        fontWeight: 800,
+        '&:hover': {
+            backgroundColor: '#F09595',
+        },
+    },
+    secondaryButton: {
+        borderRadius: 2,
+        minHeight: 42,
+        px: 2,
+        borderColor: 'rgba(255,255,255,0.18)',
+        color: '#E8EDF0',
+        '&:hover': {
+            borderColor: '#7AD7C4',
+            backgroundColor: 'rgba(122,215,196,0.08)',
+        },
+    },
+    list: {
+        display: 'grid',
+        gap: 1.5,
+    },
+    card: {
+        display: 'grid',
+        gridTemplateColumns: {
+            xs: '112px minmax(0, 1fr)',
+            md: '180px minmax(0, 1fr) auto',
+        },
+        alignItems: 'stretch',
+        gap: 2,
+        p: 1.25,
+        borderRadius: 2,
+        border: '1px solid rgba(255,255,255,0.10)',
+        backgroundColor: 'rgba(15, 23, 25, 0.92)',
+        boxShadow: '0 18px 42px rgba(0,0,0,0.30)',
+    },
+    thumbnail: {
+        position: 'relative',
+        aspectRatio: '16 / 9',
+        minHeight: {
+            xs: 74,
+            md: 102,
+        },
+        borderRadius: 1.5,
+        overflow: 'hidden',
+        backgroundColor: '#11191B',
+    },
+    thumbnailImage: {
+        width: '100%',
+        height: '100%',
+        objectFit: 'cover',
+        display: 'block',
+    },
+    thumbnailFallback: {
+        width: '100%',
+        height: '100%',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        color: 'rgba(232,237,240,0.42)',
+    },
+    duration: {
+        position: 'absolute',
+        right: 6,
+        bottom: 6,
+        height: 22,
+        backgroundColor: 'rgba(3,7,8,0.82)',
+        color: '#F8FAFB',
+        fontWeight: 700,
+    },
+    meta: {
+        minWidth: 0,
+        display: 'flex',
+        flexDirection: 'column',
+        justifyContent: 'center',
+        gap: 0.75,
+    },
+    itemTitle: {
+        color: '#F8FAFB',
+        fontWeight: 800,
+        lineHeight: 1.25,
+        overflowWrap: 'anywhere',
+    },
+    itemDescription: {
+        color: 'rgba(232,237,240,0.68)',
+        lineHeight: 1.5,
+        display: {
+            xs: 'none',
+            sm: '-webkit-box',
+        },
+        WebkitLineClamp: 2,
+        WebkitBoxOrient: 'vertical',
+        overflow: 'hidden',
+    },
+    metaLine: {
+        display: 'flex',
+        gap: 1,
+        flexWrap: 'wrap',
+        color: 'rgba(232,237,240,0.56)',
+        fontSize: '0.8rem',
+    },
+    cardActions: {
+        gridColumn: {
+            xs: '1 / -1',
+            md: 'auto',
+        },
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: {
+            xs: 'flex-end',
+            md: 'center',
+        },
+        gap: 1,
+    },
+    iconButton: {
+        color: '#E8EDF0',
+        border: '1px solid rgba(255,255,255,0.12)',
+        borderRadius: 2,
+        '&:hover': {
+            borderColor: '#7AD7C4',
+            backgroundColor: 'rgba(122,215,196,0.10)',
+        },
+    },
+    playlistChildren: {
+        ml: {
+            xs: 1,
+            md: 4,
+        },
+        pl: {
+            xs: 1,
+            md: 2,
+        },
+        borderLeft: '1px solid rgba(122,215,196,0.24)',
+        display: 'grid',
+        gap: 1.25,
+    },
+    empty: {
+        minHeight: 280,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        textAlign: 'center',
+        border: '1px dashed rgba(255,255,255,0.16)',
+        borderRadius: 2,
+        color: 'rgba(232,237,240,0.62)',
+        backgroundColor: 'rgba(255,255,255,0.03)',
+    },
+
+    previewBox: {
+        display: 'grid',
+        gridTemplateColumns: {
+            xs: '1fr',
+            sm: '180px minmax(0, 1fr)',
+        },
+        gap: 2,
+        mt: 2,
+        p: 1.5,
+        borderRadius: 2,
+        border: '1px solid rgba(122,215,196,0.22)',
+        backgroundColor: 'rgba(255,255,255,0.04)',
+    },
+    previewImage: {
+        width: '100%',
+        aspectRatio: '16 / 9',
+        objectFit: 'cover',
+        borderRadius: 1.5,
+        backgroundColor: '#11191B',
+    },
+    importStatus: {
+        display: 'grid',
+        gap: 1,
+        mb: 2,
+        p: 1.5,
+        borderRadius: 2,
+        border: '1px solid rgba(122,215,196,0.24)',
+        backgroundColor: 'rgba(15, 23, 25, 0.92)',
+    },
+    poemsGrid: {
+        display: 'grid',
+        gridTemplateColumns: {
+            xs: '1fr',
+            md: 'repeat(3, minmax(0, 1fr))',
+        },
+        gap: 2,
+        py: 1,
+    },
+    poemsBucket: {
+        minHeight: 360,
+        display: 'grid',
+        gridTemplateRows: 'auto 1fr auto',
+        gap: 1.5,
+        p: 1.5,
+        borderRadius: 2,
+        border: '1px solid rgba(255,255,255,0.12)',
+        backgroundColor: 'rgba(8, 14, 16, 0.94)',
+    },
+    poemsDangerBucket: {
+        borderColor: 'rgba(215,109,109,0.46)',
+        backgroundColor: 'rgba(40, 14, 16, 0.68)',
+    },
+    poemsBucketHeader: {
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        gap: 1,
+    },
+    poemsThumbGrid: {
+        alignContent: 'start',
+        display: 'grid',
+        gridTemplateColumns: 'repeat(auto-fill, minmax(86px, 1fr))',
+        gap: 1,
+        minHeight: 220,
+    },
+    poemsThumb: {
+        aspectRatio: '16 / 9',
+        borderRadius: 1,
+        overflow: 'hidden',
+        cursor: 'grab',
+        border: '1px solid rgba(255,255,255,0.12)',
+        backgroundColor: '#11191B',
+        '&:active': {
+            cursor: 'grabbing',
+        },
+    },
+    dialogPaper: {
+        backgroundColor: '#0D1414',
+        color: '#E8EDF0',
+        border: '1px solid rgba(255,255,255,0.12)',
+    },
+    dialogActions: {
+        px: 3,
+        pb: 3,
+    },
+    input: (theme: Theme) => ({
+        '& .MuiOutlinedInput-root': {
+            color: '#F8FAFB',
+            '& fieldset': {
+                borderColor: 'rgba(255,255,255,0.18)',
+            },
+            '&:hover fieldset': {
+                borderColor: '#7AD7C4',
+            },
+            '&.Mui-focused fieldset': {
+                borderColor: '#7AD7C4',
+            },
+        },
+        '& .MuiInputLabel-root': {
+            color: 'rgba(232,237,240,0.68)',
+        },
+        '& .MuiInputLabel-root.Mui-focused': {
+            color: '#7AD7C4',
+        },
+        [theme.breakpoints.down('sm')]: {
+            '& .MuiInputBase-input': {
+                fontSize: '0.95rem',
+            },
+        },
+    }),
+};
