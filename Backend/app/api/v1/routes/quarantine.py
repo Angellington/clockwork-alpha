@@ -4,8 +4,10 @@ from psycopg import Connection
 from app.core.database import get_db
 from app.schemas.quarantine import (
     QuarantineOverviewResponse,
+    QuarantineOverviewItem,
     QuarantinePlaylist,
     QuarantinePlaylistCreateRequest,
+    QuarantinePlaylistUpdateRequest,
     QuarantinePlaylistImportRequest,
     QuarantinePlaylistItem,
     QuarantinePlaylistVideosRequest,
@@ -15,12 +17,14 @@ from app.schemas.quarantine import (
     QuarantineBatchVideosRequest,
     QuarantineVideo,
     QuarantineVideoUrlRequest,
+    QuarantineVideoWatchedRequest,
 )
 from app.services.quarantine import (
     DuplicateQuarantineResource,
     QuarantineResourceNotFound,
     add_videos_to_playlist,
     create_manual_playlist,
+    update_playlist,
     create_video_from_url,
     delete_video,
     delete_playlist,
@@ -31,8 +35,9 @@ from app.services.quarantine import (
     get_video,
     import_youtube_playlist,
     list_overview,
+    list_all_videos,
     list_playlist_items,
-    mark_video_watched,
+    set_video_watched,
 )
 from app.services.quarantine_imports import create_import_job, get_import_job, run_youtube_playlist_import
 from app.services.youtube_errors import youtube_error_detail
@@ -47,6 +52,11 @@ def view_quarantine(
     db: Connection = Depends(get_db),
 ):
     return list_overview(db, page, page_size)
+
+
+@router.get("/videos", response_model=list[QuarantineOverviewItem])
+def view_all_videos(db: Connection = Depends(get_db)):
+    return list_all_videos(db)
 
 
 @router.post("/preview", response_model=QuarantineUrlPreview)
@@ -128,16 +138,20 @@ def view_video(video_id: int, db: Connection = Depends(get_db)):
 
 
 @router.patch("/videos/{video_id}/watched", response_model=QuarantineVideo)
-def mark_watched(video_id: int, db: Connection = Depends(get_db)):
+def mark_watched(
+    video_id: int,
+    payload: QuarantineVideoWatchedRequest,
+    db: Connection = Depends(get_db),
+):
     try:
-        return mark_video_watched(db, video_id)
+        return set_video_watched(db, video_id, payload.watched)
     except QuarantineResourceNotFound as error:
         raise HTTPException(status_code=404, detail=str(error)) from error
 
 
 @router.post("/playlists", response_model=QuarantinePlaylist, status_code=201)
 def add_playlist(playlist: QuarantinePlaylistCreateRequest, db: Connection = Depends(get_db)):
-    return create_manual_playlist(db, playlist.name)
+    return create_manual_playlist(db, playlist.name, playlist.description)
 
 
 @router.post("/playlists/import/youtube", status_code=201)
@@ -156,6 +170,18 @@ def import_playlist(playlist: QuarantinePlaylistImportRequest, db: Connection = 
 def remove_playlist(playlist_id: int, db: Connection = Depends(get_db)):
     try:
         return delete_playlist(db, playlist_id)
+    except QuarantineResourceNotFound as error:
+        raise HTTPException(status_code=404, detail=str(error)) from error
+
+
+@router.patch("/playlists/{playlist_id}", response_model=QuarantinePlaylist)
+def edit_playlist(
+    playlist_id: int,
+    playlist: QuarantinePlaylistUpdateRequest,
+    db: Connection = Depends(get_db),
+):
+    try:
+        return update_playlist(db, playlist_id, playlist.name, playlist.description)
     except QuarantineResourceNotFound as error:
         raise HTTPException(status_code=404, detail=str(error)) from error
 

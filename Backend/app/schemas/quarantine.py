@@ -8,8 +8,18 @@ class QuarantineVideoUrlRequest(BaseModel):
     url: str
 
 
+class QuarantineVideoWatchedRequest(BaseModel):
+    watched: bool
+
+
 class QuarantinePlaylistCreateRequest(BaseModel):
     name: str = Field(min_length=1)
+    description: str | None = None
+
+
+class QuarantinePlaylistUpdateRequest(BaseModel):
+    name: str = Field(min_length=1)
+    description: str | None = None
 
 
 class QuarantinePlaylistImportRequest(BaseModel):
@@ -39,6 +49,7 @@ class QuarantineVideo(BaseModel):
 class QuarantinePlaylist(BaseModel):
     id: int
     name: str
+    description: str | None = None
     channel: str | None = None
     source: Literal["manual", "youtube"]
     source_playlist_id: str | None = None
@@ -80,6 +91,7 @@ class QuarantinePlaylistItem(BaseModel):
     video_watched: bool | None = None
     child_playlist_id: int | None = None
     child_playlist_name: str | None = None
+    child_playlist_description: str | None = None
     child_playlist_created_at: datetime | None = None
 
 

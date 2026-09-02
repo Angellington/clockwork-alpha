@@ -8,8 +8,17 @@ import Download from './pages/Download/Download';
 import Quarantine from './pages/Quarantine/Quarantine';
 import QuarantinePlayer from './pages/Quarantine/QuarantinePlayer';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { Toaster } from 'sonner';
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+    defaultOptions: {
+        queries: {
+            staleTime: 30_000,
+            gcTime: 5 * 60_000,
+            refetchOnWindowFocus: false,
+        },
+    },
+});
 
 function App() {
     return (
@@ -26,6 +35,7 @@ function App() {
                             {/* <Route path="/memoing" element={<Memoing />} /> */}
                         </Routes>
                     </AppLayout>
+                    <Toaster richColors position="bottom-right" />
                 </ThemeProvider>
             </BrowserRouter>
         </QueryClientProvider>

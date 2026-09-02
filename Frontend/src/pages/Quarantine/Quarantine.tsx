@@ -5,25 +5,35 @@ import {
     LinearProgress,
     Typography,
 } from '@mui/material';
-import { Add, AutoFixHigh } from '@mui/icons-material';
+import { Add, AutoFixHigh, PlaylistAdd } from '@mui/icons-material';
 import { useEffect, useState } from 'react';
+import type { DragEvent } from 'react';
 
 import { quarantineStyles } from '../../styles/Quarantine.styles';
 import AddVideoDialog from './components/AddVideoDialog';
 import PoemsOfMachine from './components/PoemsOfMachine';
 import QuarantineCard from './components/QuarantineCard';
 import PlaylistAccordion from './components/PlaylistAccordion';
-import { useImportJobStatus, useQuarantine, type QuarantineImportJob, type QuarantineItem } from './hooks/useQuarantine';
+import CreatePlaylistDialog from './components/CreatePlaylistDialog';
+import EditPlaylistDialog from './components/EditPlaylistDialog';
+import { useAllQuarantineVideos, useImportJobStatus, useQuarantine, type QuarantineImportJob, type QuarantineItem } from './hooks/useQuarantine';
+import { confirmToast } from '../../utils/confirmToast';
 
 export default function Quarantine() {
     const [dialogOpen, setDialogOpen] = useState(false);
+    const [createPlaylistOpen, setCreatePlaylistOpen] = useState(false);
+    const [editingPlaylist, setEditingPlaylist] = useState<QuarantineItem>();
     const [poemsOpen, setPoemsOpen] = useState(false);
     const [markingVideoId, setMarkingVideoId] = useState<number>();
     const [deletingItemKey, setDeletingItemKey] = useState<string>();
-    const [removingItemId, setRemovingItemId] = useState<number>();
+    const [addingToPlaylistId, setAddingToPlaylistId] = useState<number>();
+    const [draggingVideoId, setDraggingVideoId] = useState<number>();
     const [importJobId, setImportJobId] = useState<string>();
     const {
         addVideo,
+        addVideosToPlaylist,
+        createPlaylist,
+        updatePlaylist,
         deletePlaylist,
         deleteVideo,
         deleteVideosBatch,
@@ -36,6 +46,7 @@ export default function Quarantine() {
     } = useQuarantine();
     const importJobQuery = useImportJobStatus(importJobId);
     const importJob = importJobQuery.data;
+    const allVideosQuery = useAllQuarantineVideos(poemsOpen);
 
     useEffect(() => {
         if (importJob?.status === 'completed') {
@@ -47,37 +58,35 @@ export default function Quarantine() {
         setImportJobId(job.id);
     };
 
-    const handleMarkWatched = (videoId: number) => {
+    const handleMarkWatched = (videoId: number, watched: boolean) => {
         setMarkingVideoId(videoId);
-        markWatched.mutate(videoId, {
+        markWatched.mutate({ videoId, watched }, {
             onSettled: () => setMarkingVideoId(undefined),
         });
     };
 
     const handleDeleteItem = (item: QuarantineItem) => {
-        if (!window.confirm(`Excluir "${item.title}" definitivamente da quarentena?`)) {
-            return;
-        }
+        confirmToast({
+            title: `Excluir "${item.title}"?`,
+            description: item.item_type === 'video'
+                ? 'Este video sera removido definitivamente da quarentena.'
+                : 'Esta playlist sera removida definitivamente da quarentena.',
+            destructive: true,
+            onConfirm: () => {
+                const key = `${item.item_type}-${item.id}`;
+                setDeletingItemKey(key);
 
-        const key = `${item.item_type}-${item.id}`;
-        setDeletingItemKey(key);
+                if (item.item_type === 'video') {
+                    deleteVideo.mutate(item.id, {
+                        onSettled: () => setDeletingItemKey(undefined),
+                    });
+                    return;
+                }
 
-        if (item.item_type === 'video') {
-            deleteVideo.mutate(item.id, {
-                onSettled: () => setDeletingItemKey(undefined),
-            });
-            return;
-        }
-
-        deletePlaylist.mutate(item.id, {
-            onSettled: () => setDeletingItemKey(undefined),
-        });
-    };
-
-    const handleRemovePlaylistItem = (itemId: number) => {
-        setRemovingItemId(itemId);
-        removePlaylistItem.mutate(itemId, {
-            onSettled: () => setRemovingItemId(undefined),
+                deletePlaylist.mutate(item.id, {
+                    onSettled: () => setDeletingItemKey(undefined),
+                });
+            },
         });
     };
 
@@ -93,12 +102,59 @@ export default function Quarantine() {
         });
     };
 
+    const handleDropVideoOnPlaylist = (
+        playlistId: number,
+        videoId: number,
+        sourcePlaylistItemId?: number,
+    ) => {
+        setAddingToPlaylistId(playlistId);
+        addVideosToPlaylist.mutate(
+            { playlistId, videoIds: [videoId] },
+            {
+                onSuccess: () => {
+                    if (sourcePlaylistItemId) {
+                        removePlaylistItem.mutate(sourcePlaylistItemId);
+                    }
+                },
+                onSettled: () => {
+                    setAddingToPlaylistId(undefined);
+                    setDraggingVideoId(undefined);
+                },
+            },
+        );
+    };
+
+    const handleDropVideoOutsidePlaylists = (event: DragEvent<HTMLElement>) => {
+        const playlistItemId = Number(
+            event.dataTransfer.getData('application/x-quarantine-playlist-item-id'),
+        );
+
+        if (!Number.isInteger(playlistItemId) || playlistItemId <= 0) {
+            return;
+        }
+
+        event.preventDefault();
+        event.stopPropagation();
+        removePlaylistItem.mutate(playlistItemId, {
+            onSettled: () => setDraggingVideoId(undefined),
+        });
+    };
+
     const importProgress = importJob?.total_videos
         ? Math.round((importJob.processed_videos / importJob.total_videos) * 100)
         : 0;
 
     return (
-        <Box sx={quarantineStyles.route}>
+        <Box
+            sx={quarantineStyles.route}
+            onDragOver={(event) => {
+                if (event.dataTransfer.types.includes('application/x-quarantine-playlist-item-id')) {
+                    event.preventDefault();
+                    event.dataTransfer.dropEffect = 'move';
+                }
+            }}
+            onDrop={handleDropVideoOutsidePlaylists}
+        >
             <Box sx={quarantineStyles.shell}>
                 <Box sx={quarantineStyles.header}>
                     <Box>
@@ -111,6 +167,16 @@ export default function Quarantine() {
                     </Box>
 
                     <Box sx={quarantineStyles.actions}>
+                        <Button
+                            variant="outlined"
+                            size="small"
+                            startIcon={<PlaylistAdd />}
+                            sx={quarantineStyles.secondaryButton}
+                            onClick={() => setCreatePlaylistOpen(true)}
+                        >
+                            CRIAR PLAYLIST
+                        </Button>
+
                         <Button
                             variant="contained"
                             startIcon={<Add />}
@@ -177,10 +243,13 @@ export default function Quarantine() {
                                     item={item}
                                     deletingItemKey={deletingItemKey}
                                     markingVideoId={markingVideoId}
-                                    removingItemId={removingItemId}
                                     onDeleteItem={handleDeleteItem}
+                                    onEditPlaylist={setEditingPlaylist}
                                     onMarkWatched={handleMarkWatched}
-                                    onRemovePlaylistItem={handleRemovePlaylistItem}
+                                    onDropVideo={handleDropVideoOnPlaylist}
+                                    addingToPlaylistId={addingToPlaylistId}
+                                    onVideoDragStart={setDraggingVideoId}
+                                    onVideoDragEnd={() => setDraggingVideoId(undefined)}
                                 />
                             );
                         }
@@ -192,12 +261,21 @@ export default function Quarantine() {
                                 deleting={deletingItemKey === `${item.item_type}-${item.id}`}
                                 loading={markingVideoId === item.id}
                                 onDelete={() => handleDeleteItem(item)}
-                                onMarkWatched={() => handleMarkWatched(item.id)}
+                                onMarkWatched={(watched) => handleMarkWatched(item.id, watched)}
+                                draggableVideo
+                                onVideoDragStart={setDraggingVideoId}
+                                onVideoDragEnd={() => setDraggingVideoId(undefined)}
                             />
                         );
                     })}
                 </Box>
             </Box>
+
+            {draggingVideoId && (
+                <Box sx={quarantineStyles.dragHint}>
+                    Solte em uma playlist para mover o video.
+                </Box>
+            )}
 
             <AddVideoDialog
                 open={dialogOpen}
@@ -208,9 +286,22 @@ export default function Quarantine() {
                 onImportStarted={handleImportStarted}
             />
 
+            <CreatePlaylistDialog
+                open={createPlaylistOpen}
+                createPlaylist={createPlaylist}
+                onClose={() => setCreatePlaylistOpen(false)}
+            />
+
+            <EditPlaylistDialog
+                playlist={editingPlaylist}
+                updatePlaylist={updatePlaylist}
+                onClose={() => setEditingPlaylist(undefined)}
+            />
+
             <PoemsOfMachine
                 open={poemsOpen}
                 items={query.data?.items ?? []}
+                allVideos={allVideosQuery.data ?? []}
                 deleting={deleteVideosBatch.isPending}
                 marking={markWatchedBatch.isPending}
                 onClose={() => setPoemsOpen(false)}

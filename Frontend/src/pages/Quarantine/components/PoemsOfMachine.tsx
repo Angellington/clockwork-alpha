@@ -11,6 +11,7 @@ import { DeleteSweep, DoneAll, Undo } from '@mui/icons-material';
 import { useEffect, useMemo, useState } from 'react';
 
 import { quarantineStyles } from '../../../styles/Quarantine.styles';
+import { confirmToast } from '../../../utils/confirmToast';
 import type { QuarantineItem } from '../hooks/useQuarantine';
 
 type Bucket = 'quarantine' | 'watched' | 'delete';
@@ -18,6 +19,7 @@ type Bucket = 'quarantine' | 'watched' | 'delete';
 interface PoemsOfMachineProps {
     open: boolean;
     items: QuarantineItem[];
+    allVideos: QuarantineItem[];
     marking: boolean;
     deleting: boolean;
     onClose: () => void;
@@ -40,13 +42,17 @@ function bucketTitle(bucket: Bucket) {
 export default function PoemsOfMachine({
     deleting,
     items,
+    allVideos,
     marking,
     onClose,
     onDeleteBatch,
     onMarkWatchedBatch,
     open,
 }: PoemsOfMachineProps) {
-    const videos = useMemo(() => items.filter((item) => item.item_type === 'video'), [items]);
+    const videos = useMemo(
+        () => (allVideos.length > 0 ? allVideos : items).filter((item) => item.item_type === 'video'),
+        [allVideos, items],
+    );
     const [buckets, setBuckets] = useState<Record<Bucket, number[]>>({
         quarantine: [],
         watched: [],
@@ -146,9 +152,12 @@ export default function PoemsOfMachine({
                     startIcon={<DeleteSweep />}
                     disabled={buckets.delete.length === 0 || deleting}
                     onClick={() => {
-                        if (window.confirm(`Excluir definitivamente ${buckets.delete.length} videos?`)) {
-                            onDeleteBatch(buckets.delete);
-                        }
+                        confirmToast({
+                            title: `Excluir ${buckets.delete.length} videos?`,
+                            description: 'Os videos selecionados serao removidos definitivamente da quarentena.',
+                            destructive: true,
+                            onConfirm: () => onDeleteBatch(buckets.delete),
+                        });
                     }}
                     sx={quarantineStyles.dangerButton}
                 >

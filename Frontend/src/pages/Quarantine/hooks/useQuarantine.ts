@@ -28,6 +28,7 @@ export interface PlaylistItem {
     video_watched?: boolean | null;
     child_playlist_id?: number | null;
     child_playlist_name?: string | null;
+    child_playlist_description?: string | null;
     child_playlist_created_at?: string | null;
 }
 
@@ -42,6 +43,19 @@ export interface QuarantineVideo {
     duration_seconds?: number | null;
     published_at?: string | null;
     watched: boolean;
+}
+
+export interface QuarantinePlaylist {
+    id: number;
+    name: string;
+    description?: string | null;
+    channel?: string | null;
+    source: 'manual' | 'youtube';
+    source_playlist_id?: string | null;
+    source_url?: string | null;
+    imported_at?: string | null;
+    created_at: string;
+    updated_at: string;
 }
 
 export interface QuarantinePreview {
@@ -96,6 +110,43 @@ export function useQuarantine(page = 1, pageSize = 20) {
         },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['quarantine'] });
+            queryClient.invalidateQueries({ queryKey: ['quarantine-videos-all'] });
+        },
+    });
+
+    const createPlaylist = useMutation({
+        mutationFn: async ({ name, description }: { name: string; description?: string }) => {
+            const { data } = await api.post('/quarantine/playlists', { name, description });
+            return data as QuarantinePlaylist;
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['quarantine'] });
+            queryClient.invalidateQueries({ queryKey: ['quarantine-videos-all'] });
+        },
+    });
+
+    const updatePlaylist = useMutation({
+        mutationFn: async ({ playlistId, name, description }: { playlistId: number; name: string; description?: string }) => {
+            const { data } = await api.patch(`/quarantine/playlists/${playlistId}`, { name, description });
+            return data as QuarantinePlaylist;
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['quarantine'] });
+            queryClient.invalidateQueries({ queryKey: ['quarantine-playlist-items'] });
+        },
+    });
+
+    const addVideosToPlaylist = useMutation({
+        mutationFn: async ({ playlistId, videoIds }: { playlistId: number; videoIds: number[] }) => {
+            const { data } = await api.post(`/quarantine/playlists/${playlistId}/videos`, {
+                video_ids: videoIds,
+            });
+            return data as { items: PlaylistItem[] };
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['quarantine'] });
+            queryClient.invalidateQueries({ queryKey: ['quarantine-playlist-items'] });
+            queryClient.invalidateQueries({ queryKey: ['quarantine-videos-all'] });
         },
     });
 
@@ -107,13 +158,14 @@ export function useQuarantine(page = 1, pageSize = 20) {
     });
 
     const markWatched = useMutation({
-        mutationFn: async (videoId: number) => {
-            const { data } = await api.patch(`/quarantine/videos/${videoId}/watched`);
+        mutationFn: async ({ videoId, watched }: { videoId: number; watched: boolean }) => {
+            const { data } = await api.patch(`/quarantine/videos/${videoId}/watched`, { watched });
             return data as QuarantineVideo;
         },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['quarantine'] });
             queryClient.invalidateQueries({ queryKey: ['quarantine-playlist-items'] });
+            queryClient.invalidateQueries({ queryKey: ['quarantine-videos-all'] });
         },
     });
 
@@ -125,6 +177,7 @@ export function useQuarantine(page = 1, pageSize = 20) {
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['quarantine'] });
             queryClient.invalidateQueries({ queryKey: ['quarantine-playlist-items'] });
+            queryClient.invalidateQueries({ queryKey: ['quarantine-videos-all'] });
         },
     });
 
@@ -136,6 +189,7 @@ export function useQuarantine(page = 1, pageSize = 20) {
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['quarantine'] });
             queryClient.invalidateQueries({ queryKey: ['quarantine-playlist-items'] });
+            queryClient.invalidateQueries({ queryKey: ['quarantine-videos-all'] });
         },
     });
 
@@ -149,6 +203,7 @@ export function useQuarantine(page = 1, pageSize = 20) {
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['quarantine'] });
             queryClient.invalidateQueries({ queryKey: ['quarantine-playlist-items'] });
+            queryClient.invalidateQueries({ queryKey: ['quarantine-videos-all'] });
         },
     });
 
@@ -176,6 +231,9 @@ export function useQuarantine(page = 1, pageSize = 20) {
 
     return {
         addVideo,
+        addVideosToPlaylist,
+        createPlaylist,
+        updatePlaylist,
         deletePlaylist,
         deleteVideo,
         deleteVideosBatch,
@@ -195,6 +253,18 @@ export function usePlaylistItems(playlistId: number, enabled: boolean) {
         queryFn: async () => {
             const { data } = await api.get(`/quarantine/playlists/${playlistId}/items`);
             return data as PlaylistItem[];
+        },
+    });
+}
+
+export function useAllQuarantineVideos(enabled: boolean) {
+    return useQuery({
+        queryKey: ['quarantine-videos-all'],
+        enabled,
+        staleTime: 60_000,
+        queryFn: async () => {
+            const { data } = await api.get('/quarantine/videos');
+            return data as QuarantineItem[];
         },
     });
 }

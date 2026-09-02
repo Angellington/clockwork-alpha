@@ -10,12 +10,13 @@ import {
     CheckCircleOutlined,
     DeleteOutlined,
     Folder,
-    LinkOff,
     OpenInFull,
     PlayCircleOutlined,
     Visibility,
     VisibilityOff,
 } from '@mui/icons-material';
+import { useRef, useState } from 'react';
+import type { DragEvent, MouseEvent } from 'react';
 import { useNavigate } from 'react-router';
 
 import { quarantineStyles } from '../../../styles/Quarantine.styles';
@@ -26,12 +27,13 @@ interface QuarantineCardProps {
     expanded?: boolean;
     loading?: boolean;
     deleting?: boolean;
-    removing?: boolean;
     playlistItemId?: number;
     onExpand?: () => void;
-    onMarkWatched?: () => void;
+    onMarkWatched?: (watched: boolean) => void;
     onDelete?: () => void;
-    onRemoveFromPlaylist?: () => void;
+    draggableVideo?: boolean;
+    onVideoDragStart?: (videoId: number) => void;
+    onVideoDragEnd?: () => void;
 }
 
 function formatDuration(seconds?: number | null) {
@@ -70,15 +72,63 @@ export default function QuarantineCard({
     onDelete,
     onExpand,
     onMarkWatched,
-    onRemoveFromPlaylist,
+    onVideoDragEnd,
+    onVideoDragStart,
     playlistItemId,
-    removing,
+    draggableVideo,
 }: QuarantineCardProps) {
     const navigate = useNavigate();
     const isVideo = item.item_type === 'video';
+    const [dragging, setDragging] = useState(false);
+    const suppressClickRef = useRef(false);
 
-    return (
-        <Box sx={quarantineStyles.card}>
+    const stopActionClick = (event: MouseEvent) => {
+        event.stopPropagation();
+    };
+
+    const openVideo = () => {
+        if (isVideo) {
+            navigate(`/quarantine/videos/${item.id}`);
+        }
+    };
+
+    const card = (
+        <Box
+            draggable={Boolean(draggableVideo && isVideo)}
+            onClick={() => {
+                if (suppressClickRef.current) {
+                    suppressClickRef.current = false;
+                    return;
+                }
+
+                openVideo();
+            }}
+            onDragStart={(event: DragEvent<HTMLDivElement>) => {
+                if (!isVideo || !draggableVideo) {
+                    return;
+                }
+
+                suppressClickRef.current = true;
+                setDragging(true);
+                event.dataTransfer.effectAllowed = 'move';
+                event.dataTransfer.setData('application/x-quarantine-video-id', String(item.id));
+                event.dataTransfer.setData('text/plain', String(item.id));
+                if (playlistItemId) {
+                    event.dataTransfer.setData('application/x-quarantine-playlist-item-id', String(playlistItemId));
+                }
+                onVideoDragStart?.(item.id);
+            }}
+            onDragEnd={() => {
+                setDragging(false);
+                onVideoDragEnd?.();
+            }}
+            sx={{
+                ...quarantineStyles.card,
+                ...(isVideo ? quarantineStyles.videoCard : {}),
+                ...(draggableVideo ? quarantineStyles.draggableCard : {}),
+                ...(dragging ? quarantineStyles.draggingCard : {}),
+            }}
+        >
             <Box sx={quarantineStyles.thumbnail}>
                 {item.thumbnail_url ? (
                     <Box
@@ -108,8 +158,8 @@ export default function QuarantineCard({
                 <Box sx={quarantineStyles.metaLine}>
                     <span>{isVideo ? 'Video' : 'Playlist'}</span>
                     {item.channel && <span>{item.channel}</span>}
-                    {isVideo && (
-                        <span>{item.watched ? 'Assistido' : 'Nao assistido'}</span>
+                    {isVideo && item.watched && (
+                        <Chip size="small" label="ASSISTIDO" sx={quarantineStyles.watchedFlag} />
                     )}
                 </Box>
             </Box>
@@ -117,23 +167,16 @@ export default function QuarantineCard({
             <Box sx={quarantineStyles.cardActions}>
                 {isVideo ? (
                     <>
-                        <Tooltip title="Abrir video">
-                            <IconButton
-                                aria-label="Abrir video"
-                                sx={quarantineStyles.iconButton}
-                                onClick={() => navigate(`/quarantine/videos/${item.id}`)}
-                            >
-                                <PlayCircleOutlined />
-                            </IconButton>
-                        </Tooltip>
-
-                        <Tooltip title={item.watched ? 'Video assistido' : 'Marcar como assistido'}>
+                        <Tooltip title={item.watched ? 'Marcar como nao assistido' : 'Marcar como assistido'}>
                             <span>
                                 <IconButton
-                                    aria-label="Marcar como assistido"
+                                    aria-label={item.watched ? 'Marcar como nao assistido' : 'Marcar como assistido'}
                                     sx={quarantineStyles.iconButton}
-                                    disabled={Boolean(item.watched) || loading}
-                                    onClick={onMarkWatched}
+                                    disabled={loading}
+                                    onClick={(event) => {
+                                        stopActionClick(event);
+                                        onMarkWatched?.(!item.watched);
+                                    }}
                                 >
                                     {loading ? (
                                         <CircularProgress size={20} />
@@ -146,25 +189,15 @@ export default function QuarantineCard({
                             </span>
                         </Tooltip>
 
-                        {playlistItemId && onRemoveFromPlaylist && (
-                            <Tooltip title="Remover da playlist">
-                                <IconButton
-                                    aria-label="Remover da playlist"
-                                    disabled={removing}
-                                    sx={quarantineStyles.iconButton}
-                                    onClick={onRemoveFromPlaylist}
-                                >
-                                    {removing ? <CircularProgress size={20} /> : <LinkOff />}
-                                </IconButton>
-                            </Tooltip>
-                        )}
-
                         <Tooltip title="Excluir video definitivamente">
                             <IconButton
                                 aria-label="Excluir video definitivamente"
                                 disabled={deleting}
                                 sx={quarantineStyles.iconButton}
-                                onClick={onDelete}
+                                onClick={(event) => {
+                                    stopActionClick(event);
+                                    onDelete?.();
+                                }}
                             >
                                 {deleting ? <CircularProgress size={20} /> : <DeleteOutlined />}
                             </IconButton>
@@ -176,31 +209,24 @@ export default function QuarantineCard({
                             <IconButton
                                 aria-label={expanded ? 'Recolher playlist' : 'Abrir playlist'}
                                 sx={quarantineStyles.iconButton}
-                                onClick={onExpand}
+                                onClick={(event) => {
+                                    stopActionClick(event);
+                                    onExpand?.();
+                                }}
                             >
                                 {loading ? <CircularProgress size={20} /> : expanded ? <CheckCircleOutlined /> : <OpenInFull />}
                             </IconButton>
                         </Tooltip>
-
-                        {playlistItemId && onRemoveFromPlaylist && (
-                            <Tooltip title="Remover da playlist">
-                                <IconButton
-                                    aria-label="Remover da playlist"
-                                    disabled={removing}
-                                    sx={quarantineStyles.iconButton}
-                                    onClick={onRemoveFromPlaylist}
-                                >
-                                    {removing ? <CircularProgress size={20} /> : <LinkOff />}
-                                </IconButton>
-                            </Tooltip>
-                        )}
 
                         <Tooltip title="Excluir playlist definitivamente">
                             <IconButton
                                 aria-label="Excluir playlist definitivamente"
                                 disabled={deleting}
                                 sx={quarantineStyles.iconButton}
-                                onClick={onDelete}
+                                onClick={(event) => {
+                                    stopActionClick(event);
+                                    onDelete?.();
+                                }}
                             >
                                 {deleting ? <CircularProgress size={20} /> : <DeleteOutlined />}
                             </IconButton>
@@ -210,4 +236,10 @@ export default function QuarantineCard({
             </Box>
         </Box>
     );
+
+    return isVideo ? (
+        <Tooltip title={item.title} placement="top" arrow>
+            {card}
+        </Tooltip>
+    ) : card;
 }

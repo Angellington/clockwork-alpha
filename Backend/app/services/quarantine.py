@@ -104,9 +104,9 @@ def get_video(db: Connection, video_id: int) -> dict:
     return video
 
 
-def mark_video_watched(db: Connection, video_id: int) -> dict:
+def set_video_watched(db: Connection, video_id: int, watched: bool) -> dict:
     try:
-        video = repository.mark_video_watched(db, video_id)
+        video = repository.set_video_watched(db, video_id, watched)
 
         if not video:
             raise QuarantineResourceNotFound("Video not found")
@@ -118,9 +118,32 @@ def mark_video_watched(db: Connection, video_id: int) -> dict:
         raise
 
 
-def create_manual_playlist(db: Connection, name: str) -> dict:
+def create_manual_playlist(db: Connection, name: str, description: str | None = None) -> dict:
     try:
-        playlist = repository.create_manual_playlist(db, name.strip())
+        clean_description = description.strip() if description else None
+        playlist = repository.create_manual_playlist(db, name.strip(), clean_description or None)
+        db.commit()
+        return playlist
+    except Exception:
+        db.rollback()
+        raise
+
+
+def update_playlist(db: Connection, playlist_id: int, name: str, description: str | None = None) -> dict:
+    try:
+        clean_name = name.strip()
+        if not clean_name:
+            raise ValueError("Playlist name cannot be empty")
+
+        playlist = repository.update_playlist(
+            db,
+            playlist_id,
+            clean_name,
+            description.strip() if description else None,
+        )
+        if not playlist:
+            raise QuarantineResourceNotFound("Playlist not found")
+
         db.commit()
         return playlist
     except Exception:
@@ -268,6 +291,10 @@ def list_overview(db: Connection, page: int, page_size: int) -> dict:
         "page_size": safe_page_size,
         "items": repository.list_overview(db, safe_page_size, offset),
     }
+
+
+def list_all_videos(db: Connection) -> list[dict]:
+    return repository.list_all_videos(db)
 
 
 def list_playlist_items(db: Connection, playlist_id: int) -> list[dict]:

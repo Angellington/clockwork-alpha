@@ -49,31 +49,31 @@ def create_video(db: Connection, data: dict[str, Any]) -> dict[str, Any]:
         return cursor.fetchone()
 
 
-def mark_video_watched(db: Connection, video_id: int) -> dict[str, Any] | None:
+def set_video_watched(db: Connection, video_id: int, watched: bool) -> dict[str, Any] | None:
     with db.cursor() as cursor:
         cursor.execute(
             """
             UPDATE quarantine_videos
-            SET watched = true,
-                watched_at = COALESCE(watched_at, now()),
+            SET watched = %s,
+                watched_at = CASE WHEN %s THEN COALESCE(watched_at, now()) ELSE NULL END,
                 updated_at = now()
             WHERE id = %s
             RETURNING *
             """,
-            (video_id,),
+            (watched, watched, video_id),
         )
         return cursor.fetchone()
 
 
-def create_manual_playlist(db: Connection, name: str) -> dict[str, Any]:
+def create_manual_playlist(db: Connection, name: str, description: str | None = None) -> dict[str, Any]:
     with db.cursor() as cursor:
         cursor.execute(
             """
-            INSERT INTO quarantine_playlists (name, source)
-            VALUES (%s, 'manual')
+            INSERT INTO quarantine_playlists (name, description, source)
+            VALUES (%s, %s, 'manual')
             RETURNING *
             """,
-            (name,),
+            (name, description),
         )
         return cursor.fetchone()
 
@@ -81,6 +81,27 @@ def create_manual_playlist(db: Connection, name: str) -> dict[str, Any]:
 def get_playlist(db: Connection, playlist_id: int) -> dict[str, Any] | None:
     with db.cursor() as cursor:
         cursor.execute("SELECT * FROM quarantine_playlists WHERE id = %s", (playlist_id,))
+        return cursor.fetchone()
+
+
+def update_playlist(
+    db: Connection,
+    playlist_id: int,
+    name: str,
+    description: str | None,
+) -> dict[str, Any] | None:
+    with db.cursor() as cursor:
+        cursor.execute(
+            """
+            UPDATE quarantine_playlists
+            SET name = %s,
+                description = %s,
+                updated_at = now()
+            WHERE id = %s
+            RETURNING *
+            """,
+            (name, description, playlist_id),
+        )
         return cursor.fetchone()
 
 
@@ -233,7 +254,7 @@ def list_overview(db: Connection, limit: int, offset: int) -> list[dict[str, Any
                     'playlist' AS item_type,
                     playlist.id,
                     playlist.name AS title,
-                    NULL AS description,
+                    playlist.description,
                     playlist.channel,
                     first_video.thumbnail_url,
                     stats.duration_seconds,
@@ -269,6 +290,28 @@ def list_overview(db: Connection, limit: int, offset: int) -> list[dict[str, Any
         return cursor.fetchall()
 
 
+def list_all_videos(db: Connection) -> list[dict[str, Any]]:
+    with db.cursor() as cursor:
+        cursor.execute(
+            """
+            SELECT
+                'video' AS item_type,
+                id,
+                title,
+                description,
+                channel,
+                thumbnail_url,
+                duration_seconds,
+                published_at AS sort_at,
+                watched,
+                created_at
+            FROM quarantine_videos
+            ORDER BY published_at DESC NULLS LAST, created_at DESC, id DESC
+            """
+        )
+        return cursor.fetchall()
+
+
 def list_playlist_items(db: Connection, playlist_id: int) -> list[dict[str, Any]]:
     with db.cursor() as cursor:
         cursor.execute(
@@ -286,6 +329,7 @@ def list_playlist_items(db: Connection, playlist_id: int) -> list[dict[str, Any]
                 video.watched AS video_watched,
                 child.id AS child_playlist_id,
                 child.name AS child_playlist_name,
+                child.description AS child_playlist_description,
                 child.created_at AS child_playlist_created_at
             FROM quarantine_playlist_items item
             LEFT JOIN quarantine_videos video ON video.id = item.video_id

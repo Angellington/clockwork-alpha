@@ -29,3 +29,15 @@ def check_database_connection() -> bool:
             cursor.fetchone()
 
     return True
+
+
+def ensure_quarantine_schema() -> None:
+    with open_database() as db:
+        with db.cursor() as cursor:
+            cursor.execute(
+                """
+                ALTER TABLE IF EXISTS quarantine_playlists
+                ADD COLUMN IF NOT EXISTS description text
+                """
+            )
+        db.commit()
